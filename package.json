@@ -1,0 +1,16 @@
+{
+  "name": "assemblyai-voicebot",
+  "version": "1.1.1",
+  "description": "Drop-in Angular voice layer built on AssemblyAI Universal-3.5 Pro: streaming STT, Sync STT, keyterm prompting and mid-sentence language switching.",
+  "keywords": ["assemblyai", "speech-to-text", "angular", "voice-commands", "universal-3-5-pro", "multilingual"],
+  "author": "Muthukumaran Azhagesan, https://tr.ee/XQ0qKh",
+  "license": "UNLICENSED",
+  "peerDependencies": {
+    "@angular/common": ">=17",
+    "@angular/core": ">=17"
+  },
+  "files": ["src/", "api/", "README.md"],
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  }
+}

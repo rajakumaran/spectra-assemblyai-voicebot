@@ -1,0 +1,229 @@
+<div class="voicebot-floating-wrapper"
+  [class.voicebot-active]="isExpanded() || assemblyAI.status() === 'listening' || assemblyAI.status() === 'processing'">
+
+  <!-- Slanted 3D Perspective Speech Bubble (as shown in Melody Forest picture) -->
+  @if (isExpanded()) {
+  <div class="voicebot-speech-bubble-3d"
+    [style.transform]="bubblePerspective"
+    (click)="onBubbleClick($event)"
+    title="Tap bubble to speak or mute">
+    <!-- Floating Musical Notes -->
+    <span class="music-note note-1">♪</span>
+    <span class="music-note note-2">♫</span>
+    <span class="music-note note-3">♩</span>
+
+    <!-- Dynamic Ribbon Badge -->
+    @if (assemblyAI.isCloudAssemblyAIEnabled() && assemblyAI.selectedEngine() === 'assemblyai') {
+      <!-- Golden "Powered by AssemblyAI" Showcase Ribbon Badge with Sparkles -->
+      <div class="voicebot-golden-badge assemblyai-showcase-badge"
+        (click)="toggleEngine($event)"
+        title="Powered by AssemblyAI Universal-3.5 Real-Time Streaming. Tap to toggle speech engine.">
+        <i class="fa-solid fa-sparkles text-amber-200 text-[9px] mr-1 animate-pulse"></i>
+        <i class="fa-solid fa-bolt-lightning text-[9px] mr-1 text-amber-200"></i>
+        <span class="font-bold tracking-wide">Powered by AssemblyAI</span>
+        <i class="fa-solid fa-wand-magic-sparkles text-amber-200 text-[8px] ml-1"></i>
+      </div>
+    } @else {
+      <!-- Spectra Companion Ribbon Badge with Magical Sparkles -->
+      <div class="voicebot-spectra-badge"
+        (click)="toggleEngine($event)"
+        [title]="assemblyAI.isCloudAssemblyAIEnabled() ? 'Spectra Voice Active. Tap to switch to AssemblyAI.' : 'Spectra Voice Companion'">
+        <i class="fa-solid fa-sparkles text-cyan-300 text-[8.5px] mr-1 animate-pulse"></i>
+        <span class="font-bold tracking-wide">Spectra Companion</span>
+        <i class="fa-solid fa-star text-[7px] text-violet-300 ml-1"></i>
+      </div>
+    }
+
+    <!-- Bubble Content -->
+    <div class="voicebot-bubble-body">
+      <div class="flex items-center justify-between mb-1.5">
+        <span class="spectra-brand-title flex items-center gap-1.5">
+          <i class="fa-solid fa-sparkles text-cyan-300 text-[10px] animate-pulse"></i>
+          <span class="spectra-title-text font-black tracking-wider uppercase text-[10.5px]">Spectra Voice</span>
+          <i class="fa-solid fa-star text-[7.5px] text-amber-300 animate-spin" style="animation-duration: 7s;"></i>
+        </span>
+        <div class="flex items-center gap-2">
+          <span class="text-[9px] px-2 py-0.5 rounded-full font-mono font-semibold"
+            [class.bg-emerald-500/20]="assemblyAI.status() === 'listening'"
+            [class.text-emerald-300]="assemblyAI.status() === 'listening'"
+            [class.bg-amber-500/20]="assemblyAI.status() === 'processing'"
+            [class.text-amber-300]="assemblyAI.status() === 'processing'"
+            [class.bg-white/10]="assemblyAI.status() !== 'listening' && assemblyAI.status() !== 'processing'"
+            [class.text-gray-300]="assemblyAI.status() !== 'listening' && assemblyAI.status() !== 'processing'">
+            {{ assemblyAI.status() === 'listening' ? 'Listening...' : assemblyAI.status() === 'processing' ? 'Connecting...' : 'Ready' }}
+          </span>
+          <button (click)="closeBubble($event)" class="text-slate-400 hover:text-white p-0.5 transition cursor-pointer" title="Close speech bubble">
+            <i class="fa-solid fa-xmark text-[11px]"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Dialogue / Feedback -->
+      <div class="text-xs leading-relaxed text-slate-100 font-medium min-h-[38px] flex flex-col justify-center">
+        @if (assemblyAI.status() === 'listening') {
+          @if (assemblyAI.partialTranscript()) {
+            <p class="text-cyan-200 animate-pulse italic">
+              "{{ assemblyAI.partialTranscript() }}"
+            </p>
+          } @else {
+            <p class="text-cyan-300/90 font-medium flex items-center gap-2">
+              <span>Listening... Speak your command!</span>
+            </p>
+          }
+
+          <!-- Sound Waveform Animation -->
+          <div class="voice-wave-container">
+            <div class="voice-wave-bar"></div>
+            <div class="voice-wave-bar"></div>
+            <div class="voice-wave-bar"></div>
+            <div class="voice-wave-bar"></div>
+            <div class="voice-wave-bar"></div>
+          </div>
+        } @else if (assemblyAI.status() === 'processing') {
+          <p class="text-amber-300 text-xs flex items-center gap-2">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>Connecting speech stream...</span>
+          </p>
+        } @else {
+          <p class="text-slate-200">{{ botReply() }}</p>
+        }
+
+        @if (lastCommand()) {
+          <div class="mt-1.5 pt-1.5 border-t border-white/10 text-[10px] text-emerald-300 font-semibold flex items-center gap-1">
+            <i class="fa-solid fa-circle-check text-[10px]"></i>
+            <span>{{ lastCommand() }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Fairy Companion & Action Dock Row -->
+  <div class="voicebot-character-row">
+    <!-- Controls Bar with Prominent "Push & Talk" -->
+    @if (!isMinimized()) {
+    <div class="voicebot-controls-pill">
+      <!-- Push & Talk Action Button (Single Tap or Hold) -->
+      <button
+        (click)="onPushToTalkClick($event)"
+        (mousedown)="onPushToTalkStart($event)"
+        (mouseup)="onPushToTalkEnd($event)"
+        (mouseleave)="onPushToTalkEnd($event)"
+        (touchstart)="onPushToTalkStart($event)"
+        (touchend)="onPushToTalkEnd($event)"
+        class="push-to-talk-btn"
+        [class.push-active]="assemblyAI.status() === 'listening'"
+        [title]="assemblyAI.status() === 'listening' ? 'Tap to stop listening' : 'Tap or hold to speak command'">
+        <i class="fa-solid" [class.fa-microphone-lines]="assemblyAI.status() === 'listening'" [class.fa-microphone]="assemblyAI.status() !== 'listening'"></i>
+        <span>{{ assemblyAI.status() === 'listening' ? 'Listening...' : 'Push & Talk' }}</span>
+      </button>
+
+      <!-- Engine Switcher (Shown ONLY when ENABLE_ASSEMBLYAI=true in Vercel) -->
+      @if (assemblyAI.isCloudAssemblyAIEnabled()) {
+        <button
+          (click)="toggleEngine($event)"
+          class="engine-toggle-btn"
+          [class.engine-cloud-active]="assemblyAI.selectedEngine() === 'assemblyai'"
+          [title]="assemblyAI.selectedEngine() === 'assemblyai' ? 'AssemblyAI Engine Active. Tap to switch to Standard Voice.' : 'Standard Voice Active. Tap to activate AssemblyAI Universal-3.5.'">
+          <i class="fa-solid text-[10px]" [class.fa-bolt-lightning]="assemblyAI.selectedEngine() === 'assemblyai'" [class.fa-microphone]="assemblyAI.selectedEngine() !== 'assemblyai'"></i>
+          <span class="engine-tag">{{ engineLabel() }}</span>
+          @if (assemblyAI.selectedEngine() === 'assemblyai') {
+            <i class="fa-solid fa-sparkles text-[8px] text-amber-300 animate-pulse"></i>
+          }
+        </button>
+      }
+
+      <!-- Language Chooser (Shown ONLY when MULTI_LANGUAGE_SUPPORT=true) -->
+      @if (assemblyAI.isMultiLanguageEnabled()) {
+        <button
+          (click)="toggleLanguagePicker($event)"
+          class="engine-toggle-btn"
+          [class.engine-cloud-active]="assemblyAI.selectedLanguages().length > 0"
+          [title]="'Spoken languages: ' + languageSummary() + '. Tap to choose.'">
+          <i class="fa-solid fa-language text-[11px]"></i>
+          <span class="engine-tag">{{ languageSummary() }}</span>
+        </button>
+      }
+
+      <!-- Toggle Bubble Visibility -->
+      <button (click)="toggleExpanded()" class="control-icon-btn" [title]="isExpanded() ? 'Minimize speech bubble' : 'Show speech bubble'">
+        <i class="fa-solid" [class.fa-eye-slash]="isExpanded()" [class.fa-comment-dots]="!isExpanded()"></i>
+      </button>
+
+      <!-- Minimize Dock to Fairy Icon Only -->
+      <button (click)="toggleMinimized($event)" class="control-icon-btn" title="Collapse voice panel to fairy avatar">
+        <i class="fa-solid fa-chevron-right text-[10px]"></i>
+      </button>
+    </div>
+    }
+
+    <!-- Spoken Languages (MULTI_LANGUAGE_SUPPORT only). Auto = let Universal-3.5 Pro code-switch. -->
+    @if (assemblyAI.isMultiLanguageEnabled() && showLanguages()) {
+      <div class="voicebot-language-panel" (click)="$event.stopPropagation()">
+        <div class="language-panel-head">
+          <span>Spoken languages</span>
+          <button (click)="clearLanguages($event)" class="language-auto-btn" title="Let the model detect and switch on its own">Auto</button>
+        </div>
+        <div class="language-chip-row">
+          @for (lang of assemblyAI.availableLanguages; track lang.code) {
+            <button
+              (click)="onLanguageToggle(lang.code, $event)"
+              class="language-chip"
+              [class.language-chip-on]="assemblyAI.selectedLanguages().includes(lang.code)">
+              {{ lang.label }}
+            </button>
+          }
+        </div>
+        <p class="language-panel-note">Commands are matched in English; other languages transcribe but may not trigger buttons.</p>
+      </div>
+    }
+
+    <!-- Fairy Companion Avatar (faithfully styled from the Melody Forest picture) -->
+    <div class="voicebot-fairy-companion"
+      [style.transform]="avatarPerspective"
+      (click)="onAvatarClick($event)"
+      [title]="isMinimized() ? 'Restore voice companion controls' : 'Tap me to speak or mute!'">
+
+      <!-- Fairy Wings (flutter gently, faster when active) -->
+      <div class="fairy-wing fairy-wing-left" [class.wing-flutter-fast]="assemblyAI.status() === 'listening'"></div>
+      <div class="fairy-wing fairy-wing-right" [class.wing-flutter-fast]="assemblyAI.status() === 'listening'"></div>
+
+      <!-- Sprout / Antenna on Head with Glowing Leaf -->
+      <div class="fairy-antenna">
+        <div class="antenna-stem"></div>
+        <div class="antenna-leaf"></div>
+      </div>
+
+      <!-- Round Celestial Body -->
+      <div class="fairy-body" [class.fairy-body-active]="assemblyAI.status() === 'listening'">
+        <!-- Cute Face -->
+        <div class="fairy-eyes">
+          <div class="fairy-eye"></div>
+          <div class="fairy-eye"></div>
+        </div>
+        <div class="fairy-smile"></div>
+
+        <!-- Glowing Golden Microphone Medallion on Chest (as in picture!) -->
+        <div class="golden-mic-medallion" [class.medallion-active]="assemblyAI.status() === 'listening'">
+          <i class="fa-solid fa-microphone text-[10px] text-amber-900"></i>
+        </div>
+      </div>
+
+      <!-- Listening Ripple Ring -->
+      @if (assemblyAI.status() === 'listening') {
+        <div class="listening-fairy-ripple"></div>
+      }
+
+      <span class="fairy-talk-hint">{{ assemblyAI.status() === 'listening' ? 'Listening' : 'Tap & talk' }}</span>
+    </div>
+  </div>
+<pre>
+Built by Muthukumaran Azhagesan on **AssemblyAI Universal-3.5 Pro**.
+spectra.damnittameitai.co
+musicvisuals.tech
+damnittameitai.co
+https://tr.ee/XQ0qKh - Overall career portfolio of Mr. Muthukumaran Azhagesan
+Software Architect, Developer, AI Engineer & FDE, Inventor, Scientist
+</pre>
+</div>
